@@ -167,73 +167,18 @@
       <!-- MY TOKENS PAGE -->
       <section class="page" id="pageMy">
         <div class="dash">
-          <div class="dash-top">
-            <div>
-              <h2 class="dash-title">My Tokens</h2>
-              <p class="dash-sub">
-                Use manual sell or <span class="grad grad-blue">Auto Sell</span>:
-                choose a profit target and the % you want to offload — when the condition is met, it triggers the sell action.
-              </p>
-            </div>
-
-            <!-- Sell panel -->
-            <div class="sell-panel">
-              <div class="sell-top">
-                <div class="sell-label">Sell amount</div>
-                <div class="sell-hold" id="holdingsLine">Holdings: —</div>
-              </div>
-
-              <div class="sell-input-row">
-                <input
-                  id="sellAmount"
-                  class="sell-input"
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder="Enter token amount"
-                />
-                <button class="btn btn-primary" id="sellBtn">Sell</button>
-              </div>
-
-              <div class="sell-hint" id="sellEqHint">—</div>
-
-              <div class="sell-pcts">
-                <button class="pct" data-pct="10">10%</button>
-                <button class="pct" data-pct="25">25%</button>
-                <button class="pct" data-pct="50">50%</button>
-                <button class="pct" data-pct="75">75%</button>
-                <button class="pct strong" data-pct="100">100%</button>
-              </div>
-
-              <div class="sell-divider"></div>
-
-              <!-- Auto Sell -->
-              <div class="auto-sell">
-                <div class="auto-title">Auto Sell</div>
-                <div class="auto-row">
-                  <div class="auto-field">
-                    <label class="mini-label" for="profitTarget">Profit target (USD)</label>
-                    <input id="profitTarget" class="auto-input" type="number" min="0" step="1" placeholder="e.g. 5000" />
-                  </div>
-                  <div class="auto-field">
-                    <label class="mini-label" for="autoPct">Sell %</label>
-                    <select id="autoPct" class="auto-select">
-                      <option value="10">10%</option>
-                      <option value="25">25%</option>
-                      <option value="50">50%</option>
-                      <option value="75">75%</option>
-                      <option value="100">100%</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button class="btn btn-ghost auto-btn" id="enableAutoSellBtn">Enable Auto Sell</button>
-                <div class="auto-hint" id="autoSellHint">—</div>
-              </div>
-            </div>
+          <!-- Under hero/subnav: place the cards grid -->
+          <div class="my-head">
+            <h2 class="dash-title">My Tokens</h2>
+            <p class="dash-sub">
+              Use manual sell or <span class="grad grad-blue">Auto Sell</span>:
+              choose a profit target and the % you want to offload — when the condition is met, it triggers the sell action.
+            </p>
           </div>
 
-          <div class="dash-grid">
+          <!-- Top row: Performance + Sell side by side -->
+          <div class="my-grid-top">
+            <!-- Performance -->
             <div class="card">
               <div class="card-head">
                 <div>
@@ -265,6 +210,73 @@
               </div>
             </div>
 
+            <!-- Sell (as a card) -->
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3 class="card-title small">Sell</h3>
+                  <p class="card-sub">Quick percentages auto-fill the amount. Auto Sell triggers at your target.</p>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div class="sell-top">
+                  <div class="sell-label">Sell amount</div>
+                  <div class="sell-hold" id="holdingsLine">Holdings: —</div>
+                </div>
+
+                <div class="sell-input-row">
+                  <input
+                    id="sellAmount"
+                    class="sell-input"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Enter token amount"
+                  />
+                  <button class="btn btn-primary" id="sellBtn">Sell</button>
+                </div>
+
+                <div class="sell-hint" id="sellEqHint">—</div>
+
+                <div class="sell-pcts">
+                  <button class="pct" data-pct="10">10%</button>
+                  <button class="pct" data-pct="25">25%</button>
+                  <button class="pct" data-pct="50">50%</button>
+                  <button class="pct" data-pct="75">75%</button>
+                  <button class="pct strong" data-pct="100">100%</button>
+                </div>
+
+                <div class="sell-divider"></div>
+
+                <div class="auto-sell">
+                  <div class="auto-title">Auto Sell</div>
+                  <div class="auto-row">
+                    <div class="auto-field">
+                      <label class="mini-label" for="profitTarget">Profit target (USD)</label>
+                      <input id="profitTarget" class="auto-input" type="number" min="0" step="1" placeholder="e.g. 5000" />
+                    </div>
+                    <div class="auto-field">
+                      <label class="mini-label" for="autoPct">Sell %</label>
+                      <select id="autoPct" class="auto-select">
+                        <option value="10">10%</option>
+                        <option value="25">25%</option>
+                        <option value="50">50%</option>
+                        <option value="75">75%</option>
+                        <option value="100">100%</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button class="btn btn-ghost auto-btn" id="enableAutoSellBtn">Enable Auto Sell</button>
+                  <div class="auto-hint" id="autoSellHint">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom: Token details full width rectangle -->
+          <div class="my-grid-bottom">
             <div class="card">
               <div class="card-head">
                 <div>
@@ -281,7 +293,7 @@
                 </div>
               </div>
 
-              <div class="token-grid">
+              <div class="token-grid token-grid-wide">
                 <div class="info">
                   <div class="info-k">Ticker</div>
                   <div class="info-v" id="tokenTicker">—</div>
