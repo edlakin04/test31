@@ -1,9 +1,10 @@
 /* MarketCaptureX
    - Phantom connect + SOL balance
    - Token creation stored locally for UI flow
-   - Create token (if not connected): shows connect-only modal
-   - Sell actions: percent buttons fill amount, then Sell proceeds silently
-   - Buy amount shows estimated token equivalent (simple bonding curve estimate)
+   - Create token (if not connected): connect-only modal
+   - Sell: percent buttons fill amount + Sell
+   - Buy amount shows estimated token equivalent (simple curve estimate)
+   - Auto Sell UI: stores config and updates hint (silent)
 */
 
 const $ = (id) => document.getElementById(id);
@@ -22,7 +23,6 @@ const pageMy = $("pageMy");
 
 const heroTitle = $("heroTitle");
 const heroSub = $("heroSub");
-const heroFlow = $("heroFlow");
 const heroNote = $("heroNote");
 
 const createForm = $("createForm");
@@ -86,6 +86,12 @@ const sellAmount = $("sellAmount");
 const sellEqHint = $("sellEqHint");
 const sellBtn = $("sellBtn");
 
+// Auto sell
+const profitTarget = $("profitTarget");
+const autoPct = $("autoPct");
+const enableAutoSellBtn = $("enableAutoSellBtn");
+const autoSellHint = $("autoSellHint");
+
 $("year").textContent = new Date().getFullYear();
 
 // ======= State =======
@@ -97,13 +103,11 @@ const SERVICE_FEE_RATE = 0.05;
 const SUPPLY = 1_000_000_000;
 const STORAGE_KEY = "mcx_tokens_v1";
 
-// ======= “pump.fun-like” token estimate (simple curve approximation) =======
-// This is an estimate function (not on-chain accurate) used to show a token equivalent UI.
+// ======= Token estimate curve (UI estimate) =======
 function estimateTokensForUsd(usd) {
   const x = Math.max(0, Number(usd || 0));
-  // curve params tuned for reasonable demo numbers
-  const k = 20000; // curve steepness
-  const share = 0.60; // portion of supply effectively distributed across curve
+  const k = 20000;
+  const share = 0.60;
   const tokens = SUPPLY * share * (1 - Math.exp(-x / k));
   return Math.max(0, Math.floor(tokens));
 }
@@ -151,7 +155,6 @@ function computeFee(amount) {
   return { fee, total };
 }
 function makeFakeCA() {
-  // looks like a Solana-style base58-ish string (not real)
   const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   let out = "";
   for (let i = 0; i < 44; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -159,7 +162,6 @@ function makeFakeCA() {
 }
 function cleanUrl(u) {
   const s = (u || "").trim();
-  if (!s) return "";
   return s;
 }
 
@@ -232,39 +234,29 @@ async function disconnectWallet() {
   hydrateMyTokens();
 }
 
-// ======= Tabs / Page copy changes =======
+// ======= Hero copy switching (no steps) =======
 function setHeroFor(which) {
   if (which === "create") {
     heroTitle.innerHTML =
-      `Build and launch a token with a <span class="grad grad-purple">clean</span> presale flow.`;
+      `We build the token — you decide the <span class="grad grad-purple">ceiling</span>.`;
     heroSub.innerHTML =
-      `MarketCaptureX helps creators set up a token, add branding + socials, and open a presale — with a clear
-      <span class="grad grad-blue">5% service fee</span> shown before checkout.`;
-    heroFlow.innerHTML =
-      `<span class="flow-step"><span class="flow-n">1</span> Connect wallet</span>
-       <span class="flow-dot">•</span>
-       <span class="flow-step"><span class="flow-n">2</span> Create token (fixed supply <span class="mono">1,000,000,000</span>)</span>
-       <span class="flow-dot">•</span>
-       <span class="flow-step"><span class="flow-n">3</span> Presale allocation + fee</span>
-       <span class="flow-dot">•</span>
-       <span class="flow-step"><span class="flow-n">4</span> Launch + sell flow</span>`;
-    heroNote.textContent =
-      "We also participate by holding a portion of supply — when liquidity exits, both sides can win. We push marketing aggressively using your socials and content, while you handle DEX listing costs and ongoing momentum (community + socials + paid pushes).";
+      `MarketCaptureX is a creator-first launch flow built around one simple outcome:
+       get you <span class="grad grad-blue">out of your position at the high</span>.
+       We handle the structure, presentation, and marketing push; you choose the targets, timing, and how the exit is executed.
+       The goal is to build attention, drive momentum, and make the sell process feel controlled — not random.`;
+    heroNote.innerHTML =
+      `We align by holding supply alongside you, and we push marketing using your socials + content.
+       You handle DEX costs and ongoing momentum (community, socials, partnerships).
+       A clear <span class="mono">5%</span> service fee is shown before checkout.`;
   } else {
     heroTitle.innerHTML =
-      `Manage your token with a <span class="grad grad-blue">creator</span> dashboard.`;
-    heroSub.textContent =
-      "Sell controls, contract details, and socials live here after creation. Use the percentages to auto-fill a sell amount, then execute the sell action.";
-    heroFlow.innerHTML =
-      `<span class="flow-step"><span class="flow-n">1</span> Connect wallet</span>
-       <span class="flow-dot">•</span>
-       <span class="flow-step"><span class="flow-n">2</span> Create token</span>
-       <span class="flow-dot">•</span>
-       <span class="flow-step"><span class="flow-n">3</span> Share socials + push marketing</span>
-       <span class="flow-dot">•</span>
-       <span class="flow-step"><span class="flow-n">4</span> Sell using quick actions</span>`;
-    heroNote.textContent =
-      "Your socials are part of the marketing push — we use them to post, amplify reach, and drive attention. You control listings and ongoing momentum; we align by holding supply as part of the upside.";
+      `Creator dashboard for <span class="grad grad-blue">controlled exits</span>.`;
+    heroSub.innerHTML =
+      `Manual sell and <span class="grad grad-blue">Auto Sell</span> are built for speed.
+       Set a profit target and a sell percentage — when the condition is met, the sell action triggers automatically.`;
+    heroNote.innerHTML =
+      `This dashboard keeps the sell process structured. You can also sell manually by amount or by quick percentages.
+       Social links are used in the marketing push to build attention and follow-through.`;
   }
 }
 
@@ -328,7 +320,6 @@ logoInput.addEventListener("change", () => {
 
 // ======= Modal =======
 function showModal(mode) {
-  // mode: "connect" | "create"
   modal.classList.add("show");
   modal.setAttribute("aria-hidden", "false");
 
@@ -364,7 +355,6 @@ modalConnectBtn2.addEventListener("click", async () => {
 // ======= Token creation =======
 function requireWalletForCreate() {
   if (!walletAddress) {
-    // CONNECT-ONLY modal for create action (as requested)
     showModal("connect");
     return false;
   }
@@ -411,6 +401,7 @@ function handleCreate({ fromModal = false }) {
     },
     ca: makeFakeCA(),
     devWallet: walletAddress,
+    autoSell: null,
     createdAt: new Date().toISOString(),
   };
 
@@ -426,10 +417,8 @@ createForm.addEventListener("submit", (e) => {
   handleCreate({ fromModal: false });
 });
 
-// Modal create form is used only when gating sell and user needs to create a token there
 modalCreateForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  // this still requires wallet; if wallet missing, connect-only modal will show
   handleCreate({ fromModal: true });
 });
 
@@ -446,13 +435,13 @@ clearBtn.addEventListener("click", () => {
 function getHoldings() {
   const token = getTokenForWallet(walletAddress);
   if (!walletAddress || !token) return 0;
-  // For this UI: holdings = estimated presale tokens
   return Number(token.estPresaleTokens || 0);
 }
 
 function updateSellHints() {
   const holdings = getHoldings();
   const amt = Math.max(0, Number(sellAmount.value || 0));
+
   if (!walletAddress) {
     holdingsLine.textContent = "Holdings: —";
     sellEqHint.textContent = "Connect wallet to use sell controls.";
@@ -463,6 +452,7 @@ function updateSellHints() {
     sellEqHint.textContent = "Create a token to use sell controls.";
     return;
   }
+
   holdingsLine.textContent = `Holdings: ${fmtInt(holdings)} tokens`;
   const pct = Math.min(100, Math.max(0, (amt / holdings) * 100));
   sellEqHint.textContent = amt > 0 ? `≈ ${pct.toFixed(2)}% of holdings` : "Enter an amount or use quick %";
@@ -480,7 +470,6 @@ document.querySelectorAll(".pct").forEach((btn) => {
       return;
     }
     if (holdings <= 0) {
-      // if connected but no token: show create modal (with create form)
       showModal("create");
       return;
     }
@@ -503,9 +492,29 @@ sellBtn.addEventListener("click", () => {
     return;
   }
 
-  // silent “execute”: just clear input and keep UI smooth
   sellAmount.value = "";
   updateSellHints();
+});
+
+// ======= Auto Sell (silent) =======
+enableAutoSellBtn.addEventListener("click", () => {
+  if (!walletAddress) {
+    showModal("connect");
+    return;
+  }
+  const token = getTokenForWallet(walletAddress);
+  if (!token) {
+    showModal("create");
+    return;
+  }
+
+  const target = Math.max(0, Number(profitTarget.value || 0));
+  const pct = Number(autoPct.value || 10);
+
+  token.autoSell = { targetUSD: target, sellPct: pct, enabledAt: new Date().toISOString() };
+  setTokenForWallet(walletAddress, token);
+
+  hydrateMyTokens();
 });
 
 // ======= Chart =======
@@ -517,40 +526,16 @@ function initChart() {
 
   chart = new Chart(ctx, {
     type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "Performance",
-          data: [],
-          tension: 0.35,
-          borderWidth: 2,
-          pointRadius: 0,
-        },
-      ],
-    },
+    data: { labels: [], datasets: [{ label: "Performance", data: [], tension: 0.35, borderWidth: 2, pointRadius: 0 }] },
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          labels: {
-            color: "rgba(255,255,255,0.72)",
-            boxWidth: 10,
-            boxHeight: 10,
-            usePointStyle: true,
-          },
-        },
+        legend: { labels: { color: "rgba(255,255,255,0.72)", boxWidth: 10, boxHeight: 10, usePointStyle: true } },
         tooltip: { enabled: true },
       },
       scales: {
-        x: {
-          grid: { color: "rgba(255,255,255,0.06)" },
-          ticks: { color: "rgba(255,255,255,0.55)" },
-        },
-        y: {
-          grid: { color: "rgba(255,255,255,0.06)" },
-          ticks: { color: "rgba(255,255,255,0.55)" },
-        },
+        x: { grid: { color: "rgba(255,255,255,0.06)" }, ticks: { color: "rgba(255,255,255,0.55)" } },
+        y: { grid: { color: "rgba(255,255,255,0.06)" }, ticks: { color: "rgba(255,255,255,0.55)" } },
       },
     },
   });
@@ -595,11 +580,8 @@ function hydrateMyTokens() {
     setLink(linkDiscord, "");
     holdingsLine.textContent = "Holdings: —";
     sellEqHint.textContent = "Connect wallet to use sell controls.";
-    if (chart) {
-      chart.data.labels = [];
-      chart.data.datasets[0].data = [];
-      chart.update();
-    }
+    autoSellHint.textContent = "—";
+    if (chart) { chart.data.labels = []; chart.data.datasets[0].data = []; chart.update(); }
     return;
   }
 
@@ -619,15 +601,11 @@ function hydrateMyTokens() {
     setLink(linkDiscord, "");
     holdingsLine.textContent = "Holdings: —";
     sellEqHint.textContent = "Create a token to use sell controls.";
-    if (chart) {
-      chart.data.labels = [];
-      chart.data.datasets[0].data = [];
-      chart.update();
-    }
+    autoSellHint.textContent = "—";
+    if (chart) { chart.data.labels = []; chart.data.datasets[0].data = []; chart.update(); }
     return;
   }
 
-  // Token exists (no performance data populated)
   setOverlay(true, "No performance data yet.");
   tokenName.textContent = token.name;
   tokenDesc.textContent = token.description;
@@ -646,14 +624,18 @@ function hydrateMyTokens() {
   setLink(linkTelegram, token.socials?.telegram || "");
   setLink(linkDiscord, token.socials?.discord || "");
 
-  // Sell hints
   updateSellHints();
 
-  if (chart) {
-    chart.data.labels = [];
-    chart.data.datasets[0].data = [];
-    chart.update();
+  if (token.autoSell && token.autoSell.targetUSD >= 0) {
+    const t = token.autoSell.targetUSD ? fmtUSD(token.autoSell.targetUSD) : "—";
+    autoSellHint.textContent = `Auto Sell: target ${t} • sell ${token.autoSell.sellPct}%`;
+    profitTarget.value = token.autoSell.targetUSD || "";
+    autoPct.value = String(token.autoSell.sellPct || 10);
+  } else {
+    autoSellHint.textContent = "Auto Sell not enabled";
   }
+
+  if (chart) { chart.data.labels = []; chart.data.datasets[0].data = []; chart.update(); }
 }
 
 // ======= Connect button behavior =======
@@ -666,10 +648,12 @@ connectBtn.addEventListener("click", async () => {
 function boot() {
   setHeroFor("create");
   setWalletUI({ connected: false });
+
   updateFeeUI(presale, feeValue, totalValue);
   updateFeeUI(m_presale, m_feeValue, m_totalValue);
   updateTokenEq(presale, tokenEqBuy);
   updateTokenEq(m_presale, m_tokenEqBuy);
+
   initChart();
   hydrateMyTokens();
 
