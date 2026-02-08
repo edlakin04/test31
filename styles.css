@@ -143,37 +143,14 @@ body{
 }
 .hero-sub{
   margin: 14px 0 0;
-  max-width: 74ch;
+  max-width: 82ch;
   font-size: 14.5px;
   color: var(--muted);
   line-height: 1.6;
 }
-
-.hero-flow{
-  margin: 14px 0 0;
-  color: rgba(255,255,255,0.70);
-  font-size: 13px;
-  line-height: 1.65;
-}
-.flow-step{ white-space:nowrap; }
-.flow-dot{ margin: 0 8px; color: rgba(255,255,255,0.36); }
-.flow-n{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  margin-right: 8px;
-  font-weight: 800;
-  font-size: 12px;
-  background: rgba(124,58,237,0.16);
-  border: 1px solid rgba(124,58,237,0.22);
-}
-
 .hero-note{
   margin-top: 14px;
-  max-width: 80ch;
+  max-width: 90ch;
   font-size: 12.5px;
   color: rgba(255,255,255,0.56);
   line-height: 1.65;
@@ -201,7 +178,6 @@ body{
 @media (max-width: 820px){
   .hero-title{ font-size: 34px; }
   .wallet-pill{ display:none; }
-  .flow-step{ white-space:normal; }
 }
 
 .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
@@ -303,7 +279,7 @@ label{
   font-weight: 700;
 }
 
-input, textarea{
+input, textarea, select{
   width:100%;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.10);
@@ -315,7 +291,7 @@ input, textarea{
   transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
 }
 textarea{ resize:none; }
-input:focus, textarea:focus{
+input:focus, textarea:focus, select:focus{
   border-color: rgba(124,58,237,0.42);
   box-shadow: var(--ring);
   background: rgba(0,0,0,0.24);
@@ -406,11 +382,12 @@ input:focus, textarea:focus{
 @media (max-width: 900px){
   .dash-top{ flex-direction:column; align-items:stretch; }
 }
+
 .dash-title{ margin:0; font-size: 20px; letter-spacing: -0.02em; }
 .dash-sub{ margin: 8px 0 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
 
 .sell-panel{
-  min-width: 340px;
+  min-width: 360px;
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.03);
@@ -473,6 +450,46 @@ input:focus, textarea:focus{
   background: rgba(124,58,237,0.12);
 }
 
+.sell-divider{
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 12px 0;
+  opacity: 0.65;
+}
+
+.auto-sell{ display:block; }
+.auto-title{
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.84);
+}
+.auto-row{
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: 1fr 0.75fr;
+  gap: 10px;
+}
+.mini-label{
+  display:block;
+  font-size: 11px;
+  color: rgba(255,255,255,0.62);
+  margin-bottom: 6px;
+  font-weight: 800;
+}
+.auto-input, .auto-select{
+  width:100%;
+}
+.auto-btn{
+  margin-top: 10px;
+  width: 100%;
+  justify-content:center;
+}
+.auto-hint{
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.52);
+}
+
 .dash-grid{
   display:grid;
   grid-template-columns: 1.2fr 0.9fr;
@@ -507,18 +524,22 @@ input:focus, textarea:focus{
 
 .kpis{
   display:grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   padding: 14px 18px 18px;
 }
-@media (max-width: 720px){
-  .kpis{ grid-template-columns: 1fr; }
+.kpis-compact{
+  grid-template-columns: 1.2fr 1.2fr 0.6fr;
+}
+@media (max-width: 900px){
+  .kpis-compact{ grid-template-columns: 1fr; }
 }
 .kpi{
   padding: 12px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.03);
+  min-width: 0;
 }
 .kpi-k{ font-size: 11px; color: var(--muted2); }
 .kpi-v{
@@ -555,7 +576,7 @@ input:focus, textarea:focus{
 
 .token-grid{
   display:grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   padding: 14px 18px 18px;
 }
@@ -567,9 +588,17 @@ input:focus, textarea:focus{
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.03);
+  min-width: 0;
 }
 .info-k{ font-size: 11px; color: var(--muted2); }
-.info-v{ margin-top: 6px; font-weight: 900; letter-spacing: -0.02em; }
+.info-v{
+  margin-top: 6px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .hr{
   height:1px;
