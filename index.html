@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MarketCaptureX</title>
+    <link rel="stylesheet" href="./styles.css" />
+
+    <!-- Inter-like modern font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="bg-layer"></div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <span class="brand-name">MarketCapture<span class="brand-x">X</span></span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="wallet-pill" id="walletPill" aria-live="polite">
+          <div class="wallet-dot" id="walletDot"></div>
+          <div class="wallet-meta">
+            <div class="wallet-line" id="walletLine">Not connected</div>
+            <div class="wallet-sub" id="walletSub">Connect Phantom to continue</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="connectBtn">
+          <span class="btn-ic">⟠</span>
+          <span id="connectBtnText">Connect Wallet</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <!-- Intro / Hero -->
+      <section class="hero">
+        <div class="hero-left">
+          <h1 class="hero-title" id="heroTitle">
+            Launch a token with a
+            <span class="grad grad-purple">professional</span> setup — fast.
+          </h1>
+
+          <p class="hero-sub" id="heroSub">
+            MarketCaptureX is a clean presale + token creation interface.
+            Define your coin, upload a logo, set a fixed supply, and choose your presale allocation.
+            <span class="muted">Designed to look like something a real team would ship.</span>
+          </p>
+
+          <div class="hero-stats">
+            <div class="stat">
+              <div class="stat-k">Supply</div>
+              <div class="stat-v">1,000,000,000</div>
+            </div>
+            <div class="stat">
+              <div class="stat-k">Network</div>
+              <div class="stat-v">Solana</div>
+            </div>
+            <div class="stat">
+              <div class="stat-k">Service Fee</div>
+              <div class="stat-v"><span class="pill">5%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <div class="hero-card">
+            <div class="hero-card-top">
+              <div class="chip">Preview</div>
+              <div class="chip chip-ghost">Token Studio</div>
+            </div>
+
+            <div class="hero-card-body">
+              <div class="mini-row">
+                <div class="mini-label">Ticker</div>
+                <div class="mini-value grad grad-blue">$MCX</div>
+              </div>
+              <div class="mini-row">
+                <div class="mini-label">Status</div>
+                <div class="mini-value"><span class="status-dot"></span> Ready</div>
+              </div>
+              <div class="mini-row">
+                <div class="mini-label">Presale</div>
+                <div class="mini-value">$1,000 + fee</div>
+              </div>
+              <div class="hr"></div>
+              <div class="mini-note">
+                Wallet connect is real; token creation + charts are prototype UI.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sub header navigation -->
+      <section class="subnav">
+        <div class="subnav-line"></div>
+        <nav class="subnav-links" aria-label="Primary">
+          <button class="tab active" id="tabCreate">Create Token</button>
+          <button class="tab" id="tabMy">My Tokens</button>
+        </nav>
+      </section>
+
+      <!-- CREATE PAGE -->
+      <section class="page active" id="pageCreate">
+        <div class="grid">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Create Coin</h2>
+                <p class="card-sub">
+                  Fixed supply: <span class="mono">1,000,000,000</span> tokens.
+                  Add details below, then choose your presale buy amount.
+                </p>
+              </div>
+              <div class="badge">Prototype UI</div>
+            </div>
+
+            <form id="createForm" class="form" autocomplete="off">
+              <div class="row">
+                <div class="field">
+                  <label for="coinName">Coin Name</label>
+                  <input id="coinName" type="text" placeholder="e.g. MarketCapture" maxlength="32" required />
+                </div>
+                <div class="field">
+                  <label for="ticker">Ticker</label>
+                  <input id="ticker" type="text" placeholder="e.g. MCX" maxlength="6" required />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="description">Description</label>
+                <textarea
+                  id="description"
+                  placeholder="What is this token? Keep it clear and professional."
+                  maxlength="220"
+                  rows="4"
+                  required
+                ></textarea>
+                <div class="hint"><span id="descCount">0</span>/220</div>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label for="logo">Logo</label>
+                  <div class="file">
+                    <input id="logo" type="file" accept="image/*" />
+                    <div class="file-meta">
+                      <div class="file-name" id="logoName">No file selected</div>
+                      <div class="file-sub">PNG/JPG recommended • Square looks best</div>
+                    </div>
+                    <div class="logo-preview" id="logoPreview" aria-label="Logo preview"></div>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="presale">Presale buy amount (USD)</label>
+                  <input id="presale" type="number" min="1" step="1" placeholder="e.g. 1000" required />
+                  <div class="fee-box">
+                    <div class="fee-row">
+                      <div class="fee-k">Service fee (5%)</div>
+                      <div class="fee-v" id="feeValue">$0.00</div>
+                    </div>
+                    <div class="fee-row">
+                      <div class="fee-k strong">Total charged</div>
+                      <div class="fee-v strong" id="totalValue">$0.00</div>
+                    </div>
+                    <div class="fee-note">
+                      Example: If you pay <span class="mono">$1000</span>, we take
+                      <span class="mono">$50</span> (5%) as a service fee.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button type="button" class="btn btn-ghost" id="clearBtn">Clear</button>
+                <button type="submit" class="btn btn-primary" id="createBtn">
+                  Create Coin
+                </button>
+              </div>
+
+              <div class="form-note">
+                <span class="dot"></span>
+                Wallet connection is required to create a coin.
+              </div>
+            </form>
+          </div>
+
+          <div class="card side">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title small">What happens next?</h3>
+                <p class="card-sub">
+                  This is a prototype flow — built to show structure and screens.
+                </p>
+              </div>
+            </div>
+
+            <div class="steps">
+              <div class="step">
+                <div class="step-n">1</div>
+                <div class="step-t">
+                  <div class="step-h">Connect wallet</div>
+                  <div class="step-p">Phantom connection + balance display.</div>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-n">2</div>
+                <div class="step-t">
+                  <div class="step-h">Create token config</div>
+                  <div class="step-p">Name, ticker, logo, description, presale amount.</div>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-n">3</div>
+                <div class="step-t">
+                  <div class="step-h">Presale + service fee</div>
+                  <div class="step-p">Clear 5% fee breakdown shown before creation.</div>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-n">4</div>
+                <div class="step-t">
+                  <div class="step-h">Dashboard</div>
+                  <div class="step-p">Graphs, buybacks, sells, profits — developer view.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="notice">
+              <div class="notice-title">Prototype note</div>
+              <div class="notice-text">
+                Token deployment, payments, and on-chain logic are not implemented here.
+                The UI is built to be handed to a developer to wire up properly.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MY TOKENS PAGE -->
+      <section class="page" id="pageMy">
+        <div class="dash">
+          <div class="dash-top">
+            <div>
+              <h2 class="dash-title">My Tokens</h2>
+              <p class="dash-sub">
+                Track token performance, buys/sells, and buyback signals.
+                <span class="muted">Dashboard UI for developer handoff.</span>
+              </p>
+            </div>
+            <div class="dash-actions">
+              <button class="btn btn-ghost" id="btnBuy">Buy</button>
+              <button class="btn btn-ghost" id="btnSell">Sell</button>
+              <button class="btn btn-primary" id="btnBuyback">Buyback</button>
+            </div>
+          </div>
+
+          <div class="dash-grid">
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3 class="card-title small">Performance</h3>
+                  <p class="card-sub">Profits, sells, and buybacks over time.</p>
+                </div>
+                <div class="badge" id="tokenBadge">No token yet</div>
+              </div>
+
+              <div class="chart-wrap">
+                <canvas id="chart" height="120"></canvas>
+              </div>
+
+              <div class="kpis">
+                <div class="kpi">
+                  <div class="kpi-k">Net Profit</div>
+                  <div class="kpi-v" id="kpiProfit">$0</div>
+                </div>
+                <div class="kpi">
+                  <div class="kpi-k">Total Sells</div>
+                  <div class="kpi-v" id="kpiSells">$0</div>
+                </div>
+                <div class="kpi">
+                  <div class="kpi-k">Buybacks</div>
+                  <div class="kpi-v" id="kpiBuybacks">$0</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3 class="card-title small">Token Details</h3>
+                  <p class="card-sub">Pulled from your last created token (prototype).</p>
+                </div>
+              </div>
+
+              <div class="token-row">
+                <div class="token-logo" id="tokenLogo"></div>
+                <div class="token-meta">
+                  <div class="token-name" id="tokenName">—</div>
+                  <div class="token-desc" id="tokenDesc">Create a token to populate this panel.</div>
+                </div>
+              </div>
+
+              <div class="token-grid">
+                <div class="info">
+                  <div class="info-k">Ticker</div>
+                  <div class="info-v" id="tokenTicker">—</div>
+                </div>
+                <div class="info">
+                  <div class="info-k">Supply</div>
+                  <div class="info-v mono">1,000,000,000</div>
+                </div>
+                <div class="info">
+                  <div class="info-k">Presale</div>
+                  <div class="info-v" id="tokenPresale">—</div>
+                </div>
+                <div class="info">
+                  <div class="info-k">Service Fee</div>
+                  <div class="info-v" id="tokenFee">—</div>
+                </div>
+              </div>
+
+              <div class="hr"></div>
+
+              <div class="dev-block">
+                <div class="dev-title">Developer Notes</div>
+                <ul class="dev-list">
+                  <li>Hook Buy/Sell/Buyback actions into program instructions.</li>
+                  <li>Replace localStorage with backend / on-chain state indexing.</li>
+                  <li>Validate ticker/name uniqueness + image constraints.</li>
+                  <li>Integrate payment rails + fee collection logic (5%).</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <div class="foot-left">© <span id="year"></span> MarketCaptureX</div>
+        <div class="foot-right">
+          Prototype UI • Dark Mode • Phantom Connect
+        </div>
+      </footer>
+    </main>
+
+    <!-- Modal (blur background) -->
+    <div class="modal" id="modal" aria-hidden="true">
+      <div class="modal-backdrop" id="modalBackdrop"></div>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title" id="modalTitle">Action requires a token</div>
+            <div class="modal-sub">
+              Connect your wallet and create a coin to unlock dashboard actions.
+            </div>
+          </div>
+          <button class="icon-btn" id="closeModal" aria-label="Close">✕</button>
+        </div>
+
+        <!-- Embedded create coin card -->
+        <div class="modal-body">
+          <div class="mini-warning">
+            <div class="mini-warning-dot"></div>
+            <div>
+              <div class="mini-warning-title">Wallet connection required</div>
+              <div class="mini-warning-text">
+                You must connect Phantom before creating your coin.
+              </div>
+            </div>
+          </div>
+
+          <div class="embed-card">
+            <div class="embed-top">
+              <div class="embed-title">Create Coin</div>
+              <div class="embed-pill">Supply: 1,000,000,000</div>
+            </div>
+
+            <form id="modalCreateForm" class="form compact" autocomplete="off">
+              <div class="row">
+                <div class="field">
+                  <label for="m_coinName">Coin Name</label>
+                  <input id="m_coinName" type="text" placeholder="e.g. MarketCapture" maxlength="32" required />
+                </div>
+                <div class="field">
+                  <label for="m_ticker">Ticker</label>
+                  <input id="m_ticker" type="text" placeholder="e.g. MCX" maxlength="6" required />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="m_description">Description</label>
+                <textarea
+                  id="m_description"
+                  placeholder="Short, clear description."
+                  maxlength="220"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label for="m_presale">Presale buy amount (USD)</label>
+                  <input id="m_presale" type="number" min="1" step="1" placeholder="e.g. 1000" required />
+                  <div class="fee-box">
+                    <div class="fee-row">
+                      <div class="fee-k">Service fee (5%)</div>
+                      <div class="fee-v" id="m_feeValue">$0.00</div>
+                    </div>
+                    <div class="fee-row">
+                      <div class="fee-k strong">Total charged</div>
+                      <div class="fee-v strong" id="m_totalValue">$0.00</div>
+                    </div>
+                    <div class="fee-note">
+                      Example: pay <span class="mono">$1000</span> → fee
+                      <span class="mono">$50</span>.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button type="button" class="btn btn-ghost" id="modalConnectBtn">
+                  Connect Wallet
+                </button>
+                <button type="submit" class="btn btn-primary" id="modalCreateBtn">
+                  Create Coin
+                </button>
+              </div>
+
+              <div class="form-note">
+                <span class="dot"></span>
+                This is a UI gate — creation is stored locally for demo.
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Solana web3 -->
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+
+    <script src="./main.js"></script>
+  </body>
+</html>
