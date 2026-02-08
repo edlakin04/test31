@@ -1,7 +1,9 @@
 /* MarketCaptureX
    - Phantom connect + SOL balance
    - Token creation stored locally for UI flow
-   - No pop-up notices/alerts; actions simply proceed/close as expected
+   - Create token (if not connected): shows connect-only modal
+   - Sell actions: percent buttons fill amount, then Sell proceeds silently
+   - Buy amount shows estimated token equivalent (simple bonding curve estimate)
 */
 
 const $ = (id) => document.getElementById(id);
@@ -18,6 +20,11 @@ const tabMy = $("tabMy");
 const pageCreate = $("pageCreate");
 const pageMy = $("pageMy");
 
+const heroTitle = $("heroTitle");
+const heroSub = $("heroSub");
+const heroFlow = $("heroFlow");
+const heroNote = $("heroNote");
+
 const createForm = $("createForm");
 const clearBtn = $("clearBtn");
 const desc = $("description");
@@ -28,17 +35,35 @@ const logoPreview = $("logoPreview");
 const presale = $("presale");
 const feeValue = $("feeValue");
 const totalValue = $("totalValue");
+const tokenEqBuy = $("tokenEqBuy");
 
+// socials (create)
+const twitter = $("twitter");
+const telegram = $("telegram");
+const discord = $("discord");
+
+// Modal + panels
 const modal = $("modal");
 const modalBackdrop = $("modalBackdrop");
 const closeModal = $("closeModal");
+const modalTitle = $("modalTitle");
+const modalSub = $("modalSub");
+const panelConnect = $("panelConnect");
+const panelCreate = $("panelCreate");
 const modalConnectBtn = $("modalConnectBtn");
+const modalConnectBtn2 = $("modalConnectBtn2");
 const modalCreateForm = $("modalCreateForm");
+
+// modal form fields
 const m_presale = $("m_presale");
 const m_feeValue = $("m_feeValue");
 const m_totalValue = $("m_totalValue");
+const m_tokenEqBuy = $("m_tokenEqBuy");
+const m_twitter = $("m_twitter");
+const m_telegram = $("m_telegram");
+const m_discord = $("m_discord");
 
-// Dashboard
+// My tokens page
 const chartOverlay = $("chartOverlay");
 const tokenLogo = $("tokenLogo");
 const tokenName = $("tokenName");
@@ -46,11 +71,20 @@ const tokenDesc = $("tokenDesc");
 const tokenTicker = $("tokenTicker");
 const tokenPresale = $("tokenPresale");
 const tokenFee = $("tokenFee");
+const tokenEstTokens = $("tokenEstTokens");
 const walletSummary = $("walletSummary");
 
-const kpiProfit = $("kpiProfit");
-const kpiSells = $("kpiSells");
-const kpiRemaining = $("kpiRemaining");
+const kpiCA = $("kpiCA");
+const kpiDevWallet = $("kpiDevWallet");
+
+const linkTwitter = $("linkTwitter");
+const linkTelegram = $("linkTelegram");
+const linkDiscord = $("linkDiscord");
+
+const holdingsLine = $("holdingsLine");
+const sellAmount = $("sellAmount");
+const sellEqHint = $("sellEqHint");
+const sellBtn = $("sellBtn");
 
 $("year").textContent = new Date().getFullYear();
 
@@ -63,10 +97,25 @@ const SERVICE_FEE_RATE = 0.05;
 const SUPPLY = 1_000_000_000;
 const STORAGE_KEY = "mcx_tokens_v1";
 
+// ======= “pump.fun-like” token estimate (simple curve approximation) =======
+// This is an estimate function (not on-chain accurate) used to show a token equivalent UI.
+function estimateTokensForUsd(usd) {
+  const x = Math.max(0, Number(usd || 0));
+  // curve params tuned for reasonable demo numbers
+  const k = 20000; // curve steepness
+  const share = 0.60; // portion of supply effectively distributed across curve
+  const tokens = SUPPLY * share * (1 - Math.exp(-x / k));
+  return Math.max(0, Math.floor(tokens));
+}
+
 // ======= Helpers =======
 function fmtUSD(n) {
   const num = Number(n || 0);
   return num.toLocaleString(undefined, { style: "currency", currency: "USD" });
+}
+function fmtInt(n) {
+  const num = Number(n || 0);
+  return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 function shortAddr(addr) {
   if (!addr) return "";
@@ -101,6 +150,18 @@ function computeFee(amount) {
   const total = a + fee;
   return { fee, total };
 }
+function makeFakeCA() {
+  // looks like a Solana-style base58-ish string (not real)
+  const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  let out = "";
+  for (let i = 0; i < 44; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return out;
+}
+function cleanUrl(u) {
+  const s = (u || "").trim();
+  if (!s) return "";
+  return s;
+}
 
 // ======= Phantom Connect =======
 function getPhantomProvider() {
@@ -127,15 +188,14 @@ function setWalletUI({ connected }) {
 
   walletDot.classList.add("connected");
   walletLine.textContent = shortAddr(walletAddress);
-  walletSub.textContent =
-    solBalance == null ? "Connected" : `${solBalance.toFixed(4)} SOL`;
+  walletSub.textContent = solBalance == null ? "Connected" : `${solBalance.toFixed(4)} SOL`;
   connectBtnText.textContent = "Connected";
   walletSummary.textContent = shortAddr(walletAddress);
 }
 
 async function connectWallet() {
   const provider = getPhantomProvider();
-  if (!provider) return;
+  if (!provider) return false;
 
   try {
     const res = await provider.connect();
@@ -153,8 +213,9 @@ async function connectWallet() {
 
     setWalletUI({ connected: true });
     hydrateMyTokens();
+    return true;
   } catch {
-    // user rejected; do nothing
+    return false;
   }
 }
 
@@ -171,7 +232,42 @@ async function disconnectWallet() {
   hydrateMyTokens();
 }
 
-// ======= Tabs / Pages =======
+// ======= Tabs / Page copy changes =======
+function setHeroFor(which) {
+  if (which === "create") {
+    heroTitle.innerHTML =
+      `Build and launch a token with a <span class="grad grad-purple">clean</span> presale flow.`;
+    heroSub.innerHTML =
+      `MarketCaptureX helps creators set up a token, add branding + socials, and open a presale — with a clear
+      <span class="grad grad-blue">5% service fee</span> shown before checkout.`;
+    heroFlow.innerHTML =
+      `<span class="flow-step"><span class="flow-n">1</span> Connect wallet</span>
+       <span class="flow-dot">•</span>
+       <span class="flow-step"><span class="flow-n">2</span> Create token (fixed supply <span class="mono">1,000,000,000</span>)</span>
+       <span class="flow-dot">•</span>
+       <span class="flow-step"><span class="flow-n">3</span> Presale allocation + fee</span>
+       <span class="flow-dot">•</span>
+       <span class="flow-step"><span class="flow-n">4</span> Launch + sell flow</span>`;
+    heroNote.textContent =
+      "We also participate by holding a portion of supply — when liquidity exits, both sides can win. We push marketing aggressively using your socials and content, while you handle DEX listing costs and ongoing momentum (community + socials + paid pushes).";
+  } else {
+    heroTitle.innerHTML =
+      `Manage your token with a <span class="grad grad-blue">creator</span> dashboard.`;
+    heroSub.textContent =
+      "Sell controls, contract details, and socials live here after creation. Use the percentages to auto-fill a sell amount, then execute the sell action.";
+    heroFlow.innerHTML =
+      `<span class="flow-step"><span class="flow-n">1</span> Connect wallet</span>
+       <span class="flow-dot">•</span>
+       <span class="flow-step"><span class="flow-n">2</span> Create token</span>
+       <span class="flow-dot">•</span>
+       <span class="flow-step"><span class="flow-n">3</span> Share socials + push marketing</span>
+       <span class="flow-dot">•</span>
+       <span class="flow-step"><span class="flow-n">4</span> Sell using quick actions</span>`;
+    heroNote.textContent =
+      "Your socials are part of the marketing push — we use them to post, amplify reach, and drive attention. You control listings and ongoing momentum; we align by holding supply as part of the upside.";
+  }
+}
+
 function setTab(which) {
   const isCreate = which === "create";
   tabCreate.classList.toggle("active", isCreate);
@@ -179,13 +275,14 @@ function setTab(which) {
   pageCreate.classList.toggle("active", isCreate);
   pageMy.classList.toggle("active", !isCreate);
 
+  setHeroFor(which);
   if (!isCreate) hydrateMyTokens();
 }
 
 tabCreate.addEventListener("click", () => setTab("create"));
 tabMy.addEventListener("click", () => setTab("my"));
 
-// ======= Fee UI updates =======
+// ======= Fee + token eq UI updates =======
 function updateFeeUI(inputEl, feeEl, totalEl) {
   const v = Number(inputEl.value || 0);
   const { fee, total } = computeFee(v);
@@ -193,8 +290,20 @@ function updateFeeUI(inputEl, feeEl, totalEl) {
   totalEl.textContent = fmtUSD(total);
 }
 
-presale.addEventListener("input", () => updateFeeUI(presale, feeValue, totalValue));
-m_presale.addEventListener("input", () => updateFeeUI(m_presale, m_feeValue, m_totalValue));
+function updateTokenEq(usdInputEl, eqEl) {
+  const v = Number(usdInputEl.value || 0);
+  const tokens = estimateTokensForUsd(v);
+  eqEl.textContent = `≈ ${fmtInt(tokens)} tokens`;
+}
+
+presale.addEventListener("input", () => {
+  updateFeeUI(presale, feeValue, totalValue);
+  updateTokenEq(presale, tokenEqBuy);
+});
+m_presale.addEventListener("input", () => {
+  updateFeeUI(m_presale, m_feeValue, m_totalValue);
+  updateTokenEq(m_presale, m_tokenEqBuy);
+});
 
 // ======= Description counter =======
 desc.addEventListener("input", () => {
@@ -218,36 +327,61 @@ logoInput.addEventListener("change", () => {
 });
 
 // ======= Modal =======
-function showModal() {
+function showModal(mode) {
+  // mode: "connect" | "create"
   modal.classList.add("show");
   modal.setAttribute("aria-hidden", "false");
+
+  if (mode === "create") {
+    modalTitle.textContent = "Create a token";
+    modalSub.textContent = "Connect your wallet and create a token to continue.";
+    panelConnect.classList.add("hidden");
+    panelCreate.classList.remove("hidden");
+  } else {
+    modalTitle.textContent = "Connect wallet";
+    modalSub.textContent = "You need to connect your wallet for this action.";
+    panelCreate.classList.add("hidden");
+    panelConnect.classList.remove("hidden");
+  }
 }
 function hideModal() {
   modal.classList.remove("show");
   modal.setAttribute("aria-hidden", "true");
 }
+
 modalBackdrop.addEventListener("click", hideModal);
 closeModal.addEventListener("click", hideModal);
+
 modalConnectBtn.addEventListener("click", async () => {
-  await connectWallet();
+  const ok = await connectWallet();
+  if (ok) hideModal();
+});
+modalConnectBtn2.addEventListener("click", async () => {
+  const ok = await connectWallet();
+  if (ok) hideModal();
 });
 
 // ======= Token creation =======
-function canCreateToken() {
+function requireWalletForCreate() {
   if (!walletAddress) {
-    showModal();
+    // CONNECT-ONLY modal for create action (as requested)
+    showModal("connect");
     return false;
   }
   return true;
 }
 
 function handleCreate({ fromModal = false }) {
-  if (!canCreateToken()) return;
+  if (!requireWalletForCreate()) return;
 
   const name = (fromModal ? $("m_coinName") : $("coinName")).value.trim();
   const ticker = safeUpper((fromModal ? $("m_ticker") : $("ticker")).value);
   const description = (fromModal ? $("m_description") : $("description")).value.trim();
   const presaleUSD = Number((fromModal ? $("m_presale") : $("presale")).value || 0);
+
+  const sTwitter = cleanUrl(fromModal ? m_twitter.value : twitter.value);
+  const sTelegram = cleanUrl(fromModal ? m_telegram.value : telegram.value);
+  const sDiscord = cleanUrl(fromModal ? m_discord.value : discord.value);
 
   if (!name || !ticker || !description || presaleUSD <= 0) return;
 
@@ -258,6 +392,7 @@ function handleCreate({ fromModal = false }) {
   }
 
   const { fee, total } = computeFee(presaleUSD);
+  const estTokens = estimateTokensForUsd(presaleUSD);
 
   const token = {
     name,
@@ -267,13 +402,20 @@ function handleCreate({ fromModal = false }) {
     presaleUSD,
     feeUSD: fee,
     totalUSD: total,
+    estPresaleTokens: estTokens,
     logoDataUrl,
+    socials: {
+      twitter: sTwitter,
+      telegram: sTelegram,
+      discord: sDiscord,
+    },
+    ca: makeFakeCA(),
+    devWallet: walletAddress,
     createdAt: new Date().toISOString(),
   };
 
   setTokenForWallet(walletAddress, token);
 
-  // silent success: update UI + route to My Tokens
   hydrateMyTokens();
   setTab("my");
   hideModal();
@@ -284,8 +426,10 @@ createForm.addEventListener("submit", (e) => {
   handleCreate({ fromModal: false });
 });
 
+// Modal create form is used only when gating sell and user needs to create a token there
 modalCreateForm.addEventListener("submit", (e) => {
   e.preventDefault();
+  // this still requires wallet; if wallet missing, connect-only modal will show
   handleCreate({ fromModal: true });
 });
 
@@ -295,30 +439,76 @@ clearBtn.addEventListener("click", () => {
   logoName.textContent = "No file selected";
   logoPreview.innerHTML = "";
   updateFeeUI(presale, feeValue, totalValue);
+  updateTokenEq(presale, tokenEqBuy);
 });
 
-// ======= Sell actions =======
-function pulse(el) {
-  el.style.transform = "translateY(-1px)";
-  setTimeout(() => (el.style.transform = ""), 120);
+// ======= Sell UI =======
+function getHoldings() {
+  const token = getTokenForWallet(walletAddress);
+  if (!walletAddress || !token) return 0;
+  // For this UI: holdings = estimated presale tokens
+  return Number(token.estPresaleTokens || 0);
 }
 
-function handleSellClick(btn) {
-  const token = getTokenForWallet(walletAddress);
-  if (!walletAddress || !token) {
-    showModal();
+function updateSellHints() {
+  const holdings = getHoldings();
+  const amt = Math.max(0, Number(sellAmount.value || 0));
+  if (!walletAddress) {
+    holdingsLine.textContent = "Holdings: —";
+    sellEqHint.textContent = "Connect wallet to use sell controls.";
+    return;
+  }
+  if (holdings <= 0) {
+    holdingsLine.textContent = "Holdings: —";
+    sellEqHint.textContent = "Create a token to use sell controls.";
+    return;
+  }
+  holdingsLine.textContent = `Holdings: ${fmtInt(holdings)} tokens`;
+  const pct = Math.min(100, Math.max(0, (amt / holdings) * 100));
+  sellEqHint.textContent = amt > 0 ? `≈ ${pct.toFixed(2)}% of holdings` : "Enter an amount or use quick %";
+}
+
+sellAmount.addEventListener("input", updateSellHints);
+
+document.querySelectorAll(".pct").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const holdings = getHoldings();
+    const pct = Number(btn.getAttribute("data-pct") || 0);
+
+    if (!walletAddress) {
+      showModal("connect");
+      return;
+    }
+    if (holdings <= 0) {
+      // if connected but no token: show create modal (with create form)
+      showModal("create");
+      return;
+    }
+
+    const amt = Math.floor((holdings * pct) / 100);
+    sellAmount.value = String(amt);
+    updateSellHints();
+  });
+});
+
+sellBtn.addEventListener("click", () => {
+  const holdings = getHoldings();
+
+  if (!walletAddress) {
+    showModal("connect");
+    return;
+  }
+  if (holdings <= 0) {
+    showModal("create");
     return;
   }
 
-  // silently "do" the action: just a subtle button pulse
-  pulse(btn);
-}
-
-document.querySelectorAll(".sell-chip").forEach((btn) => {
-  btn.addEventListener("click", () => handleSellClick(btn));
+  // silent “execute”: just clear input and keep UI smooth
+  sellAmount.value = "";
+  updateSellHints();
 });
 
-// ======= Chart (empty until real data) =======
+// ======= Chart =======
 let chart = null;
 
 function initChart() {
@@ -366,7 +556,6 @@ function initChart() {
   });
 }
 
-// ======= My Tokens hydration =======
 function setOverlay(show, text) {
   if (show) {
     chartOverlay.textContent = text;
@@ -374,6 +563,17 @@ function setOverlay(show, text) {
   } else {
     chartOverlay.classList.add("hidden");
   }
+}
+
+// ======= My Tokens hydration =======
+function setLink(a, url) {
+  if (!url) {
+    a.href = "#";
+    a.classList.add("disabled");
+    return;
+  }
+  a.href = url;
+  a.classList.remove("disabled");
 }
 
 function hydrateMyTokens() {
@@ -387,9 +587,14 @@ function hydrateMyTokens() {
     tokenTicker.textContent = "—";
     tokenPresale.textContent = "—";
     tokenFee.textContent = "—";
-    kpiProfit.textContent = "—";
-    kpiSells.textContent = "—";
-    kpiRemaining.textContent = "—";
+    tokenEstTokens.textContent = "—";
+    kpiCA.textContent = "—";
+    kpiDevWallet.textContent = "—";
+    setLink(linkTwitter, "");
+    setLink(linkTelegram, "");
+    setLink(linkDiscord, "");
+    holdingsLine.textContent = "Holdings: —";
+    sellEqHint.textContent = "Connect wallet to use sell controls.";
     if (chart) {
       chart.data.labels = [];
       chart.data.datasets[0].data = [];
@@ -406,9 +611,14 @@ function hydrateMyTokens() {
     tokenTicker.textContent = "—";
     tokenPresale.textContent = "—";
     tokenFee.textContent = "—";
-    kpiProfit.textContent = "—";
-    kpiSells.textContent = "—";
-    kpiRemaining.textContent = "—";
+    tokenEstTokens.textContent = "—";
+    kpiCA.textContent = "—";
+    kpiDevWallet.textContent = shortAddr(walletAddress);
+    setLink(linkTwitter, "");
+    setLink(linkTelegram, "");
+    setLink(linkDiscord, "");
+    holdingsLine.textContent = "Holdings: —";
+    sellEqHint.textContent = "Create a token to use sell controls.";
     if (chart) {
       chart.data.labels = [];
       chart.data.datasets[0].data = [];
@@ -417,23 +627,27 @@ function hydrateMyTokens() {
     return;
   }
 
-  // Token exists, but no real performance data yet
+  // Token exists (no performance data populated)
   setOverlay(true, "No performance data yet.");
   tokenName.textContent = token.name;
   tokenDesc.textContent = token.description;
   tokenTicker.textContent = token.ticker;
   tokenPresale.textContent = fmtUSD(token.presaleUSD);
   tokenFee.textContent = fmtUSD(token.feeUSD);
+  tokenEstTokens.textContent = fmtInt(token.estPresaleTokens || 0);
 
-  if (token.logoDataUrl) {
-    tokenLogo.innerHTML = `<img alt="logo" src="${token.logoDataUrl}">`;
-  } else {
-    tokenLogo.innerHTML = "";
-  }
+  if (token.logoDataUrl) tokenLogo.innerHTML = `<img alt="logo" src="${token.logoDataUrl}">`;
+  else tokenLogo.innerHTML = "";
 
-  kpiProfit.textContent = "—";
-  kpiSells.textContent = "—";
-  kpiRemaining.textContent = "—";
+  kpiCA.textContent = token.ca || "—";
+  kpiDevWallet.textContent = token.devWallet ? shortAddr(token.devWallet) : "—";
+
+  setLink(linkTwitter, token.socials?.twitter || "");
+  setLink(linkTelegram, token.socials?.telegram || "");
+  setLink(linkDiscord, token.socials?.discord || "");
+
+  // Sell hints
+  updateSellHints();
 
   if (chart) {
     chart.data.labels = [];
@@ -444,18 +658,18 @@ function hydrateMyTokens() {
 
 // ======= Connect button behavior =======
 connectBtn.addEventListener("click", async () => {
-  if (!walletAddress) {
-    await connectWallet();
-  } else {
-    await disconnectWallet();
-  }
+  if (!walletAddress) await connectWallet();
+  else await disconnectWallet();
 });
 
 // ======= Init =======
 function boot() {
+  setHeroFor("create");
   setWalletUI({ connected: false });
   updateFeeUI(presale, feeValue, totalValue);
   updateFeeUI(m_presale, m_feeValue, m_totalValue);
+  updateTokenEq(presale, tokenEqBuy);
+  updateTokenEq(m_presale, m_tokenEqBuy);
   initChart();
   hydrateMyTokens();
 
