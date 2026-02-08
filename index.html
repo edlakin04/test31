@@ -44,51 +44,31 @@
     <main class="shell">
       <!-- Intro / Hero -->
       <section class="hero">
-        <div class="hero-left">
-          <h1 class="hero-title" id="heroTitle">
-            Build and launch a token with a
-            <span class="grad grad-purple">clean</span> presale flow.
-          </h1>
+        <h1 class="hero-title" id="heroTitle">
+          Build and launch a token with a <span class="grad grad-purple">clean</span> presale flow.
+        </h1>
 
-          <p class="hero-sub" id="heroSub">
-            MarketCaptureX helps creators set up a token with a fixed supply, add branding, and open a presale —
-            with a clear <span class="grad grad-blue">5% service fee</span> shown before checkout.
-          </p>
+        <p class="hero-sub" id="heroSub">
+          MarketCaptureX helps creators set up a token, add branding + socials, and open a presale — with a clear
+          <span class="grad grad-blue">5% service fee</span> shown before checkout.
+        </p>
 
-          <!-- Steps moved into intro -->
-          <div class="hero-steps">
-            <div class="hero-step">
-              <div class="hero-step-n">1</div>
-              <div class="hero-step-t">
-                <div class="hero-step-h">Connect wallet</div>
-                <div class="hero-step-p">Secure access to create and manage your token.</div>
-              </div>
-            </div>
+        <!-- Steps integrated into text (no borders/cards) -->
+        <p class="hero-flow" id="heroFlow">
+          <span class="flow-step"><span class="flow-n">1</span> Connect wallet</span>
+          <span class="flow-dot">•</span>
+          <span class="flow-step"><span class="flow-n">2</span> Create token (fixed supply <span class="mono">1,000,000,000</span>)</span>
+          <span class="flow-dot">•</span>
+          <span class="flow-step"><span class="flow-n">3</span> Presale allocation + fee</span>
+          <span class="flow-dot">•</span>
+          <span class="flow-step"><span class="flow-n">4</span> Sell from dashboard</span>
+        </p>
 
-            <div class="hero-step">
-              <div class="hero-step-n">2</div>
-              <div class="hero-step-t">
-                <div class="hero-step-h">Create token</div>
-                <div class="hero-step-p">Name, ticker, description, logo — supply fixed at <span class="mono">1,000,000,000</span>.</div>
-              </div>
-            </div>
-
-            <div class="hero-step">
-              <div class="hero-step-n">3</div>
-              <div class="hero-step-t">
-                <div class="hero-step-h">Presale allocation</div>
-                <div class="hero-step-p">Choose your presale buy amount and review the <span class="mono">5%</span> service fee.</div>
-              </div>
-            </div>
-
-            <div class="hero-step">
-              <div class="hero-step-n">4</div>
-              <div class="hero-step-t">
-                <div class="hero-step-h">Sell tokens</div>
-                <div class="hero-step-p">Use quick sell actions from your dashboard once live.</div>
-              </div>
-            </div>
-          </div>
+        <!-- Business model note -->
+        <div class="hero-note" id="heroNote">
+          We also participate by holding a portion of supply — when liquidity exits, both sides can win.
+          We push marketing aggressively using your socials and content, while you handle DEX listing costs and
+          ongoing momentum (community + socials + paid pushes).
         </div>
       </section>
 
@@ -146,13 +126,14 @@
                       <div class="file-name" id="logoName">No file selected</div>
                       <div class="file-sub">PNG/JPG recommended • Square looks best</div>
                     </div>
-                    <div class="logo-preview" id="logoPreview" aria-label="Logo preview"></div>
+                    <div class="logo-preview big" id="logoPreview" aria-label="Logo preview"></div>
                   </div>
                 </div>
 
                 <div class="field">
                   <label for="presale">Presale buy amount (USD)</label>
                   <input id="presale" type="number" min="1" step="1" placeholder="e.g. 1000" required />
+                  <div class="hint hint-strong" id="tokenEqBuy">≈ 0 tokens</div>
 
                   <div class="fee-box">
                     <div class="fee-row">
@@ -167,6 +148,22 @@
                       Example: If you pay <span class="mono">$1000</span>, the service fee is <span class="mono">$50</span> (5%).
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <!-- Social links -->
+              <div class="grid3">
+                <div class="field">
+                  <label for="twitter">X / Twitter</label>
+                  <input id="twitter" type="url" placeholder="https://x.com/yourproject" />
+                </div>
+                <div class="field">
+                  <label for="telegram">Telegram</label>
+                  <input id="telegram" type="url" placeholder="https://t.me/yourproject" />
+                </div>
+                <div class="field">
+                  <label for="discord">Discord</label>
+                  <input id="discord" type="url" placeholder="https://discord.gg/yourinvite" />
                 </div>
               </div>
 
@@ -186,16 +183,38 @@
             <div>
               <h2 class="dash-title">My Tokens</h2>
               <p class="dash-sub">
-                Sell actions and token details appear here once your wallet is connected and a token is created.
+                Use sell controls and view token info once your wallet is connected and a token is created.
               </p>
             </div>
 
-            <div class="dash-actions">
-              <button class="btn btn-ghost sell-chip" data-sell="10">10%</button>
-              <button class="btn btn-ghost sell-chip" data-sell="25">25%</button>
-              <button class="btn btn-ghost sell-chip" data-sell="50">50%</button>
-              <button class="btn btn-ghost sell-chip" data-sell="75">75%</button>
-              <button class="btn btn-primary sell-chip" data-sell="100">Sell 100%</button>
+            <!-- Sell panel -->
+            <div class="sell-panel">
+              <div class="sell-top">
+                <div class="sell-label">Sell amount</div>
+                <div class="sell-hold" id="holdingsLine">Holdings: —</div>
+              </div>
+
+              <div class="sell-input-row">
+                <input
+                  id="sellAmount"
+                  class="sell-input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="Enter token amount"
+                />
+                <button class="btn btn-primary" id="sellBtn">Sell</button>
+              </div>
+
+              <div class="sell-hint" id="sellEqHint">—</div>
+
+              <div class="sell-pcts">
+                <button class="pct" data-pct="10">10%</button>
+                <button class="pct" data-pct="25">25%</button>
+                <button class="pct" data-pct="50">50%</button>
+                <button class="pct" data-pct="75">75%</button>
+                <button class="pct strong" data-pct="100">100%</button>
+              </div>
             </div>
           </div>
 
@@ -204,7 +223,7 @@
               <div class="card-head">
                 <div>
                   <h3 class="card-title small">Performance</h3>
-                  <p class="card-sub">Profits and activity will populate once live.</p>
+                  <p class="card-sub">Performance appears here once data is available.</p>
                 </div>
               </div>
 
@@ -217,16 +236,16 @@
 
               <div class="kpis">
                 <div class="kpi">
-                  <div class="kpi-k">Net Profit</div>
-                  <div class="kpi-v" id="kpiProfit">—</div>
+                  <div class="kpi-k">Contract</div>
+                  <div class="kpi-v mono" id="kpiCA">—</div>
                 </div>
                 <div class="kpi">
-                  <div class="kpi-k">Total Sold</div>
-                  <div class="kpi-v" id="kpiSells">—</div>
+                  <div class="kpi-k">Dev Wallet</div>
+                  <div class="kpi-v mono" id="kpiDevWallet">—</div>
                 </div>
                 <div class="kpi">
-                  <div class="kpi-k">Remaining</div>
-                  <div class="kpi-v" id="kpiRemaining">—</div>
+                  <div class="kpi-k">Supply</div>
+                  <div class="kpi-v mono">1,000,000,000</div>
                 </div>
               </div>
             </div>
@@ -240,7 +259,7 @@
               </div>
 
               <div class="token-row">
-                <div class="token-logo" id="tokenLogo"></div>
+                <div class="token-logo big" id="tokenLogo"></div>
                 <div class="token-meta">
                   <div class="token-name" id="tokenName">—</div>
                   <div class="token-desc" id="tokenDesc">Connect your wallet and create a token to see details.</div>
@@ -253,16 +272,27 @@
                   <div class="info-v" id="tokenTicker">—</div>
                 </div>
                 <div class="info">
-                  <div class="info-k">Supply</div>
-                  <div class="info-v mono">1,000,000,000</div>
-                </div>
-                <div class="info">
                   <div class="info-k">Presale</div>
                   <div class="info-v" id="tokenPresale">—</div>
                 </div>
                 <div class="info">
                   <div class="info-k">Service Fee</div>
                   <div class="info-v" id="tokenFee">—</div>
+                </div>
+                <div class="info">
+                  <div class="info-k">Est. Presale Tokens</div>
+                  <div class="info-v" id="tokenEstTokens">—</div>
+                </div>
+              </div>
+
+              <div class="hr"></div>
+
+              <div class="links">
+                <div class="links-title">Socials</div>
+                <div class="links-grid">
+                  <a class="link" id="linkTwitter" href="#" target="_blank" rel="noreferrer">X / Twitter</a>
+                  <a class="link" id="linkTelegram" href="#" target="_blank" rel="noreferrer">Telegram</a>
+                  <a class="link" id="linkDiscord" href="#" target="_blank" rel="noreferrer">Discord</a>
                 </div>
               </div>
 
@@ -284,21 +314,32 @@
       </footer>
     </main>
 
-    <!-- Modal (blur background) -->
+    <!-- Modal (shared) -->
     <div class="modal" id="modal" aria-hidden="true">
       <div class="modal-backdrop" id="modalBackdrop"></div>
+
       <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-head">
           <div>
-            <div class="modal-title" id="modalTitle">Connect and create a token</div>
-            <div class="modal-sub">
-              Connect your wallet to create a token and unlock actions.
-            </div>
+            <div class="modal-title" id="modalTitle">Connect wallet</div>
+            <div class="modal-sub" id="modalSub">You need to connect your wallet for this action.</div>
           </div>
           <button class="icon-btn" id="closeModal" aria-label="Close">✕</button>
         </div>
 
-        <div class="modal-body">
+        <!-- CONNECT-ONLY PANEL -->
+        <div class="modal-body" id="panelConnect">
+          <div class="connect-card">
+            <div class="connect-title">Wallet required</div>
+            <div class="connect-text">Connect Phantom to continue.</div>
+            <div class="connect-actions">
+              <button class="btn btn-primary" id="modalConnectBtn">Connect Wallet</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CREATE PANEL (used for gating sell when no token) -->
+        <div class="modal-body hidden" id="panelCreate">
           <div class="embed-card">
             <div class="embed-top">
               <div class="embed-title">Create Token</div>
@@ -332,6 +373,8 @@
                 <div class="field">
                   <label for="m_presale">Presale buy amount (USD)</label>
                   <input id="m_presale" type="number" min="1" step="1" placeholder="e.g. 1000" required />
+                  <div class="hint hint-strong" id="m_tokenEqBuy">≈ 0 tokens</div>
+
                   <div class="fee-box">
                     <div class="fee-row">
                       <div class="fee-k">Service fee (5%)</div>
@@ -341,15 +384,27 @@
                       <div class="fee-k strong">Total charged</div>
                       <div class="fee-v strong" id="m_totalValue">$0.00</div>
                     </div>
-                    <div class="fee-note">
-                      Example: pay <span class="mono">$1000</span> → fee <span class="mono">$50</span>.
-                    </div>
                   </div>
                 </div>
               </div>
 
+              <div class="grid3">
+                <div class="field">
+                  <label for="m_twitter">X / Twitter</label>
+                  <input id="m_twitter" type="url" placeholder="https://x.com/yourproject" />
+                </div>
+                <div class="field">
+                  <label for="m_telegram">Telegram</label>
+                  <input id="m_telegram" type="url" placeholder="https://t.me/yourproject" />
+                </div>
+                <div class="field">
+                  <label for="m_discord">Discord</label>
+                  <input id="m_discord" type="url" placeholder="https://discord.gg/yourinvite" />
+                </div>
+              </div>
+
               <div class="actions">
-                <button type="button" class="btn btn-ghost" id="modalConnectBtn">Connect Wallet</button>
+                <button type="button" class="btn btn-ghost" id="modalConnectBtn2">Connect Wallet</button>
                 <button type="submit" class="btn btn-primary" id="modalCreateBtn">Create Token</button>
               </div>
             </form>
