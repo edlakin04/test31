@@ -45,30 +45,20 @@
       <!-- Intro / Hero -->
       <section class="hero">
         <h1 class="hero-title" id="heroTitle">
-          Build and launch a token with a <span class="grad grad-purple">clean</span> presale flow.
+          We build the token — you decide the <span class="grad grad-purple">ceiling</span>.
         </h1>
 
         <p class="hero-sub" id="heroSub">
-          MarketCaptureX helps creators set up a token, add branding + socials, and open a presale — with a clear
-          <span class="grad grad-blue">5% service fee</span> shown before checkout.
+          MarketCaptureX is a creator-first launch flow built around one simple outcome:
+          get you <span class="grad grad-blue">out of your position at the high</span>.
+          We handle the structure, presentation, and marketing push; you choose the targets, timing, and how the exit is executed.
+          The goal is to build attention, drive momentum, and make the sell process feel controlled — not random.
         </p>
 
-        <!-- Steps integrated into text (no borders/cards) -->
-        <p class="hero-flow" id="heroFlow">
-          <span class="flow-step"><span class="flow-n">1</span> Connect wallet</span>
-          <span class="flow-dot">•</span>
-          <span class="flow-step"><span class="flow-n">2</span> Create token (fixed supply <span class="mono">1,000,000,000</span>)</span>
-          <span class="flow-dot">•</span>
-          <span class="flow-step"><span class="flow-n">3</span> Presale allocation + fee</span>
-          <span class="flow-dot">•</span>
-          <span class="flow-step"><span class="flow-n">4</span> Sell from dashboard</span>
-        </p>
-
-        <!-- Business model note -->
         <div class="hero-note" id="heroNote">
-          We also participate by holding a portion of supply — when liquidity exits, both sides can win.
-          We push marketing aggressively using your socials and content, while you handle DEX listing costs and
-          ongoing momentum (community + socials + paid pushes).
+          We align by holding supply alongside you, and we push marketing using your socials + content.
+          You handle DEX costs and ongoing momentum (community, socials, partnerships).
+          A clear <span class="mono">5%</span> service fee is shown before checkout.
         </div>
       </section>
 
@@ -88,7 +78,8 @@
               <div>
                 <h2 class="card-title">Create Token</h2>
                 <p class="card-sub">
-                  Supply is fixed at <span class="mono">1,000,000,000</span> tokens. Add details below, then choose your presale buy amount.
+                  Supply is fixed at <span class="mono">1,000,000,000</span> tokens. Add details below, choose your presale buy amount,
+                  and the <span class="mono">5%</span> service fee is calculated automatically.
                 </p>
               </div>
             </div>
@@ -144,9 +135,6 @@
                       <div class="fee-k strong">Total charged</div>
                       <div class="fee-v strong" id="totalValue">$0.00</div>
                     </div>
-                    <div class="fee-note">
-                      Example: If you pay <span class="mono">$1000</span>, the service fee is <span class="mono">$50</span> (5%).
-                    </div>
                   </div>
                 </div>
               </div>
@@ -183,7 +171,8 @@
             <div>
               <h2 class="dash-title">My Tokens</h2>
               <p class="dash-sub">
-                Use sell controls and view token info once your wallet is connected and a token is created.
+                Use manual sell or <span class="grad grad-blue">Auto Sell</span>:
+                choose a profit target and the % you want to offload — when the condition is met, it triggers the sell action.
               </p>
             </div>
 
@@ -215,6 +204,32 @@
                 <button class="pct" data-pct="75">75%</button>
                 <button class="pct strong" data-pct="100">100%</button>
               </div>
+
+              <div class="sell-divider"></div>
+
+              <!-- Auto Sell -->
+              <div class="auto-sell">
+                <div class="auto-title">Auto Sell</div>
+                <div class="auto-row">
+                  <div class="auto-field">
+                    <label class="mini-label" for="profitTarget">Profit target (USD)</label>
+                    <input id="profitTarget" class="auto-input" type="number" min="0" step="1" placeholder="e.g. 5000" />
+                  </div>
+                  <div class="auto-field">
+                    <label class="mini-label" for="autoPct">Sell %</label>
+                    <select id="autoPct" class="auto-select">
+                      <option value="10">10%</option>
+                      <option value="25">25%</option>
+                      <option value="50">50%</option>
+                      <option value="75">75%</option>
+                      <option value="100">100%</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button class="btn btn-ghost auto-btn" id="enableAutoSellBtn">Enable Auto Sell</button>
+                <div class="auto-hint" id="autoSellHint">—</div>
+              </div>
             </div>
           </div>
 
@@ -234,7 +249,7 @@
                 <canvas id="chart" height="130"></canvas>
               </div>
 
-              <div class="kpis">
+              <div class="kpis kpis-compact">
                 <div class="kpi">
                   <div class="kpi-k">Contract</div>
                   <div class="kpi-v mono" id="kpiCA">—</div>
